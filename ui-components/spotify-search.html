@@ -13,161 +13,167 @@
     
     body { 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-      background: linear-gradient(to bottom, #121212 0%, #1a1a1a 100%);
-      color: #ffffff;
-      padding: 24px;
+      background: #ffffff;
+      color: #2d2d2d;
+      padding: 0;
       min-height: 100vh;
+      overflow-x: hidden;
     }
     
     .container {
-      max-width: 1400px;
-      margin: 0 auto;
+      max-width: 100%;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1a1a1a;
+        color: #ececec;
+      }
+      
+      .track-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      
+      .track-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(29, 185, 84, 0.3);
+      }
+      
+      .track-name {
+        color: #ececec;
+      }
+      
+      .track-meta {
+        color: #a0a0a0;
+      }
+      
+      .add-button {
+        background: rgba(29, 185, 84, 0.1);
+        color: #1db954;
+        border: 1px solid rgba(29, 185, 84, 0.3);
+      }
+      
+      .add-button:hover {
+        background: #1db954;
+        color: #000;
+        border-color: #1db954;
+      }
+      
+      .section-title {
+        color: #ececec;
+      }
     }
     
     .search-header {
-      margin-bottom: 32px;
-      border-bottom: 2px solid #282828;
-      padding-bottom: 20px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .search-header {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+      }
     }
     
     .search-query {
-      font-size: 32px;
-      font-weight: 900;
+      font-size: 22px;
+      font-weight: 600;
       color: #1db954;
-      margin-bottom: 8px;
-      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      letter-spacing: -0.3px;
     }
     
     .search-stats {
-      font-size: 15px;
-      color: #b3b3b3;
-      font-weight: 500;
+      font-size: 14px;
+      color: #666;
+      font-weight: 400;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .search-stats {
+        color: #a0a0a0;
+      }
     }
     
     .section {
-      margin-bottom: 40px;
+      margin-bottom: 32px;
     }
     
     .section-title {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 20px;
-      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #2d2d2d;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .track-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .track-item {
       display: flex;
       align-items: center;
       gap: 12px;
-    }
-    
-    .section-title::before {
-      content: '';
-      width: 4px;
-      height: 24px;
-      background: #1db954;
-      border-radius: 2px;
-    }
-    
-    .items-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 20px;
-    }
-    
-    .item-card {
-      background: linear-gradient(135deg, #1e1e1e 0%, #181818 100%);
-      border-radius: 12px;
-      padding: 16px;
+      padding: 12px 16px;
+      border-radius: 24px;
+      transition: all 0.2s ease;
       cursor: pointer;
-      transition: all 0.3s ease;
+      background: rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(0, 0, 0, 0.06);
       position: relative;
-      border: 1px solid transparent;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     
-    .item-card:hover {
-      background: linear-gradient(135deg, #282828 0%, #222222 100%);
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(29, 185, 84, 0.2);
-      border-color: #1db954;
+    .track-item:hover {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(29, 185, 84, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
     
-    .item-image-container {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 1;
-      margin-bottom: 16px;
-      overflow: hidden;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #282828 0%, #1a1a1a 100%);
-    }
-    
-    .item-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.3s ease;
-    }
-    
-    .item-card:hover .item-image {
-      transform: scale(1.05);
-    }
-    
-    .artist-image {
-      border-radius: 50% !important;
-    }
-    
-    .play-button {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
+    .track-image {
       width: 48px;
       height: 48px;
-      background: #1db954;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: all 0.3s ease;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-      cursor: pointer;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      flex-shrink: 0;
     }
     
-    .play-button:hover {
-      background: #1ed760;
-      transform: translateY(8px) scale(1.1);
+    @media (prefers-color-scheme: dark) {
+      .track-image {
+        background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
+      }
     }
     
-    .item-card:hover .play-button {
-      opacity: 1;
-      transform: translateY(0);
+    .track-info {
+      flex: 1;
+      min-width: 0;
+      margin-right: 12px;
     }
     
-    .play-icon {
-      width: 0;
-      height: 0;
-      border-left: 14px solid #000000;
-      border-top: 8px solid transparent;
-      border-bottom: 8px solid transparent;
-      margin-left: 3px;
-    }
-    
-    .item-name {
-      font-weight: 700;
-      font-size: 16px;
-      color: #ffffff;
-      margin-bottom: 8px;
+    .track-name {
+      font-size: 15px;
+      font-weight: 500;
+      color: #2d2d2d;
       overflow: hidden;
       text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+      white-space: nowrap;
+      margin-bottom: 4px;
       line-height: 1.3;
     }
     
-    .item-meta {
-      font-size: 14px;
-      color: #b3b3b3;
+    .track-meta {
+      font-size: 13px;
+      color: #666;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -175,175 +181,134 @@
     
     .explicit-badge {
       display: inline-block;
-      padding: 2px 6px;
-      background: #b3b3b3;
-      color: #000000;
+      padding: 2px 5px;
+      background: #9ca3af;
+      color: #fff;
       border-radius: 3px;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
       text-transform: uppercase;
       margin-left: 6px;
       vertical-align: middle;
     }
     
-    .track-list {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+    .track-duration {
+      font-size: 13px;
+      color: #999;
+      font-weight: 400;
+      min-width: 45px;
+      text-align: right;
+      margin-right: 12px;
+      flex-shrink: 0;
     }
     
-    .track-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 12px;
-      border-radius: 8px;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      background: rgba(255, 255, 255, 0.02);
-    }
-    
-    .track-item:hover {
-      background: rgba(255, 255, 255, 0.08);
-    }
-    
-    .track-index {
-      width: 24px;
-      text-align: center;
-      font-size: 14px;
-      color: #b3b3b3;
-      font-weight: 600;
-    }
-    
-    .track-image {
-      width: 48px;
-      height: 48px;
-      border-radius: 6px;
-      background: linear-gradient(135deg, #282828 0%, #1a1a1a 100%);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-    
-    .track-info {
-      flex: 1;
-      min-width: 0;
-    }
-    
-    .track-name {
-      font-size: 16px;
-      font-weight: 600;
-      color: #ffffff;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      margin-bottom: 4px;
-    }
-    
-    .track-artist {
-      font-size: 14px;
-      color: #b3b3b3;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    
-    .track-album {
-      flex: 1;
-      min-width: 0;
-      font-size: 14px;
-      color: #b3b3b3;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      display: none;
-    }
-    
-    @media (min-width: 768px) {
-      .track-album {
-        display: block;
+    @media (prefers-color-scheme: dark) {
+      .track-duration {
+        color: #808080;
       }
     }
     
-    .track-duration {
-      font-size: 14px;
-      color: #b3b3b3;
-      font-weight: 500;
-      min-width: 50px;
-      text-align: right;
-    }
-    
-    .save-button {
-      padding: 6px 12px;
-      background: transparent;
-      border: 2px solid #1db954;
+    .add-button {
+      padding: 7px 16px;
+      background: rgba(29, 185, 84, 0.08);
+      border: 1px solid rgba(29, 185, 84, 0.2);
       color: #1db954;
-      border-radius: 24px;
-      font-size: 12px;
-      font-weight: 700;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     
-    .save-button:hover {
+    .add-button:hover {
       background: #1db954;
-      color: #000000;
+      color: #fff;
+      border-color: #1db954;
       transform: scale(1.05);
+    }
+    
+    .add-button:active {
+      transform: scale(0.98);
+    }
+    
+    .add-button.added {
+      background: #1db954;
+      color: #fff;
+      border-color: #1db954;
     }
     
     .empty-state {
       text-align: center;
-      padding: 80px 20px;
-      color: #b3b3b3;
+      padding: 60px 20px;
+      color: #999;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .empty-state {
+        color: #808080;
+      }
     }
     
     .empty-icon {
-      font-size: 80px;
-      margin-bottom: 24px;
+      font-size: 64px;
+      margin-bottom: 20px;
       opacity: 0.5;
     }
     
     .empty-title {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 12px;
-      color: #ffffff;
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #2d2d2d;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .empty-title {
+        color: #ececec;
+      }
     }
     
     .empty-description {
-      font-size: 16px;
-      color: #b3b3b3;
+      font-size: 14px;
+      color: #666;
     }
     
-    .badge {
-      display: inline-block;
-      padding: 4px 10px;
-      background: rgba(29, 185, 84, 0.2);
-      color: #1db954;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-left: 8px;
+    @media (prefers-color-scheme: dark) {
+      .empty-description {
+        color: #a0a0a0;
+      }
     }
     
     @media (max-width: 768px) {
-      body {
+      .container {
         padding: 16px;
       }
       
       .search-query {
-        font-size: 24px;
+        font-size: 18px;
       }
       
-      .items-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 12px;
+      .track-item {
+        padding: 10px 12px;
+        gap: 10px;
       }
       
-      .section-title {
-        font-size: 20px;
+      .track-image {
+        width: 40px;
+        height: 40px;
+      }
+      
+      .track-duration {
+        font-size: 12px;
+        min-width: 40px;
+        margin-right: 8px;
+      }
+      
+      .add-button {
+        padding: 6px 12px;
+        font-size: 12px;
       }
     }
   </style>
@@ -359,6 +324,7 @@
       const { query = '', results = {} } = props;
       
       const root = document.getElementById('root');
+      const addedTracks = new Set();
       
       // Calculate total results
       const totalResults = Object.values(results).reduce((sum, arr) => {
@@ -370,7 +336,7 @@
       header.className = 'search-header';
       header.innerHTML = `
         <div class="search-query">"${query}"</div>
-        <div class="search-stats">${totalResults} results found across all categories</div>
+        <div class="search-stats">${totalResults} results found</div>
       `;
       root.appendChild(header);
       
@@ -379,6 +345,30 @@
         const minutes = Math.floor(ms / 60000);
         const seconds = Math.floor((ms % 60000) / 1000);
         return minutes + ':' + String(seconds).padStart(2, '0');
+      }
+      
+      // Handle add button click
+      function handleAddTrack(track, button) {
+        if (addedTracks.has(track.id)) {
+          addedTracks.delete(track.id);
+          button.textContent = 'Add';
+          button.classList.remove('added');
+        } else {
+          addedTracks.add(track.id);
+          button.textContent = 'Added';
+          button.classList.add('added');
+        }
+        
+        // Send message to parent
+        if (window.parent && window.parent.postMessage) {
+          window.parent.postMessage({
+            type: 'spotify-track-add',
+            data: {
+              action: addedTracks.has(track.id) ? 'remove' : 'add',
+              track: track
+            }
+          }, '*');
+        }
       }
       
       // Tracks section
@@ -390,25 +380,63 @@
         const trackList = document.createElement('div');
         trackList.className = 'track-list';
         
-        results.tracks.slice(0, 15).forEach((track, index) => {
+        results.tracks.slice(0, 20).forEach((track) => {
           const item = document.createElement('div');
           item.className = 'track-item';
-          item.innerHTML = `
-            <div class="track-index">${index + 1}</div>
-            <img src="${track.image || 'https://via.placeholder.com/48'}" class="track-image" alt="${track.name}">
-            <div class="track-info">
-              <div class="track-name">${track.name}${track.explicit ? '<span class="explicit-badge">E</span>' : ''}</div>
-              <div class="track-artist">${track.artists}</div>
-            </div>
-            <div class="track-album">${track.album}</div>
-            <div class="track-duration">${formatDuration(track.duration_ms)}</div>
-          `;
+          
+          const trackImage = document.createElement('img');
+          trackImage.src = track.image || 'https://via.placeholder.com/48';
+          trackImage.className = 'track-image';
+          trackImage.alt = track.name;
+          
+          const trackInfo = document.createElement('div');
+          trackInfo.className = 'track-info';
+          
+          const trackName = document.createElement('div');
+          trackName.className = 'track-name';
+          trackName.textContent = track.name;
+          if (track.explicit) {
+            const badge = document.createElement('span');
+            badge.className = 'explicit-badge';
+            badge.textContent = 'E';
+            trackName.appendChild(badge);
+          }
+          
+          const trackMeta = document.createElement('div');
+          trackMeta.className = 'track-meta';
+          trackMeta.textContent = `${track.artists} • ${track.album}`;
+          
+          trackInfo.appendChild(trackName);
+          trackInfo.appendChild(trackMeta);
+          
+          const duration = document.createElement('div');
+          duration.className = 'track-duration';
+          duration.textContent = formatDuration(track.duration_ms);
+          
+          const addButton = document.createElement('button');
+          addButton.className = 'add-button';
+          addButton.textContent = 'Add';
+          
+          addButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleAddTrack(track, addButton);
+          });
+          
+          item.appendChild(trackImage);
+          item.appendChild(trackInfo);
+          item.appendChild(duration);
+          item.appendChild(addButton);
           
           item.addEventListener('click', () => {
             if (window.parent && window.parent.postMessage) {
               window.parent.postMessage({
-                type: 'spotify-item-clicked',
-                data: { type: 'track', id: track.id, uri: track.uri, url: track.external_url }
+                type: 'spotify-track-play',
+                data: {
+                  type: 'track',
+                  id: track.id,
+                  uri: track.uri,
+                  url: track.external_url
+                }
               }, '*');
             }
           });
@@ -417,124 +445,6 @@
         });
         
         section.appendChild(trackList);
-        root.appendChild(section);
-      }
-      
-      // Artists section
-      if (results.artists && results.artists.length > 0) {
-        const section = document.createElement('div');
-        section.className = 'section';
-        section.innerHTML = '<div class="section-title">Artists</div>';
-        
-        const grid = document.createElement('div');
-        grid.className = 'items-grid';
-        
-        results.artists.forEach(artist => {
-          const card = document.createElement('div');
-          card.className = 'item-card';
-          card.innerHTML = `
-            <div class="item-image-container">
-              <img src="${artist.image || 'https://via.placeholder.com/200'}" class="item-image artist-image" alt="${artist.name}">
-              <div class="play-button">
-                <div class="play-icon"></div>
-              </div>
-            </div>
-            <div class="item-name">${artist.name}</div>
-            <div class="item-meta">${(artist.followers || 0).toLocaleString()} followers</div>
-          `;
-          
-          card.addEventListener('click', () => {
-            if (window.parent && window.parent.postMessage) {
-              window.parent.postMessage({
-                type: 'spotify-item-clicked',
-                data: { type: 'artist', id: artist.id, uri: artist.uri, url: artist.external_url }
-              }, '*');
-            }
-          });
-          
-          grid.appendChild(card);
-        });
-        
-        section.appendChild(grid);
-        root.appendChild(section);
-      }
-      
-      // Albums section
-      if (results.albums && results.albums.length > 0) {
-        const section = document.createElement('div');
-        section.className = 'section';
-        section.innerHTML = '<div class="section-title">Albums</div>';
-        
-        const grid = document.createElement('div');
-        grid.className = 'items-grid';
-        
-        results.albums.forEach(album => {
-          const card = document.createElement('div');
-          card.className = 'item-card';
-          const year = album.release_date ? album.release_date.split('-')[0] : '';
-          card.innerHTML = `
-            <div class="item-image-container">
-              <img src="${album.image || 'https://via.placeholder.com/200'}" class="item-image" alt="${album.name}">
-              <div class="play-button">
-                <div class="play-icon"></div>
-              </div>
-            </div>
-            <div class="item-name">${album.name}</div>
-            <div class="item-meta">${album.artists}${year ? ' • ' + year : ''}</div>
-          `;
-          
-          card.addEventListener('click', () => {
-            if (window.parent && window.parent.postMessage) {
-              window.parent.postMessage({
-                type: 'spotify-item-clicked',
-                data: { type: 'album', id: album.id, uri: album.uri, url: album.external_url }
-              }, '*');
-            }
-          });
-          
-          grid.appendChild(card);
-        });
-        
-        section.appendChild(grid);
-        root.appendChild(section);
-      }
-      
-      // Playlists section
-      if (results.playlists && results.playlists.length > 0) {
-        const section = document.createElement('div');
-        section.className = 'section';
-        section.innerHTML = '<div class="section-title">Playlists</div>';
-        
-        const grid = document.createElement('div');
-        grid.className = 'items-grid';
-        
-        results.playlists.forEach(playlist => {
-          const card = document.createElement('div');
-          card.className = 'item-card';
-          card.innerHTML = `
-            <div class="item-image-container">
-              <img src="${playlist.image || 'https://via.placeholder.com/200'}" class="item-image" alt="${playlist.name}">
-              <div class="play-button">
-                <div class="play-icon"></div>
-              </div>
-            </div>
-            <div class="item-name">${playlist.name}</div>
-            <div class="item-meta">By ${playlist.owner}${playlist.tracks_total ? ' • ' + playlist.tracks_total + ' songs' : ''}</div>
-          `;
-          
-          card.addEventListener('click', () => {
-            if (window.parent && window.parent.postMessage) {
-              window.parent.postMessage({
-                type: 'spotify-item-clicked',
-                data: { type: 'playlist', id: playlist.id, uri: playlist.uri, url: playlist.external_url }
-              }, '*');
-            }
-          });
-          
-          grid.appendChild(card);
-        });
-        
-        section.appendChild(grid);
         root.appendChild(section);
       }
       
@@ -553,4 +463,5 @@
   </script>
 </body>
 </html>
+
 
