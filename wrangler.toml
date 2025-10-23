@@ -1,0 +1,41 @@
+# Wrangler Configuration for Spotify MCP Server
+name = "spotify-mcp-server"
+main = "src/worker.ts"
+compatibility_date = "2025-01-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Worker Settings
+workers_dev = true
+
+# Environment Variables (set using wrangler secret)
+# SPOTIFY_CLIENT_ID - Your Spotify App Client ID
+# SPOTIFY_CLIENT_SECRET - Your Spotify App Client Secret
+# SPOTIFY_REDIRECT_URI - OAuth redirect URI (e.g., https://your-worker.workers.dev/auth/callback)
+
+# KV Namespace for storing OAuth tokens
+[[kv_namespaces]]
+binding = "SPOTIFY_TOKENS"
+id = "your_kv_namespace_id_here"
+preview_id = "your_preview_kv_namespace_id_here"
+
+# Development Configuration
+[dev]
+port = 8787
+local_protocol = "http"
+
+# Routes (optional - for custom domains)
+# routes = [
+#   { pattern = "spotify-mcp.example.com/*", zone_name = "example.com" }
+# ]
+
+# Build Configuration
+[build]
+command = "npm run build"
+
+# Custom Build Settings
+[build.upload]
+format = "service-worker"
+
+# Environment Configuration
+[env.production]
+name = "spotify-mcp-server-production"

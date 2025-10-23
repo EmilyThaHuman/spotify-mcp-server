@@ -1,0 +1,41 @@
+{
+  "name": "spotify-mcp-server",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server for Spotify integration with ChatGPT Apps SDK",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/server.ts",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "worker:dev": "wrangler dev src/worker.ts",
+    "worker:deploy": "wrangler deploy src/worker.ts"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "spotify",
+    "chatgpt",
+    "openai",
+    "apps-sdk",
+    "music",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250115.0",
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "wrangler": "^3.101.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
