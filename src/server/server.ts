@@ -813,7 +813,7 @@ async function handlePostMessage(
   }
 }
 
-async function handleAuthCallback(req: IncomingMessage, res: ServerResponse, url: URL) {
+async function handleAuthCallback(_req: IncomingMessage, res: ServerResponse, url: URL) {
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");

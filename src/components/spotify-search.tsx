@@ -16,7 +16,7 @@ interface Track {
   external_url: string;
 }
 
-interface SpotifySearchProps {
+interface SpotifySearchProps extends Record<string, unknown> {
   query?: string;
   results?: {
     tracks?: Track[];
@@ -24,17 +24,17 @@ interface SpotifySearchProps {
   };
 }
 
-const SpotifySearch: React.FC = () => {
-  const props = useWidgetProps<SpotifySearchProps>({
+const SpotifySearch: React.FC<SpotifySearchProps> = (defaultProps) => {
+  const props = useWidgetProps<SpotifySearchProps>(defaultProps || {
     query: '',
     results: {},
   });
 
   const displayMode = useDisplayMode();
-  const isDark = displayMode === 'dark' || 
+  const isDark = (displayMode as string) === 'dark' || 
     (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-  const { query = '', results = {} } = props;
+  const { results = {} } = props;
   const [addedTracks, setAddedTracks] = useState<Set<string>>(new Set());
 
   // Calculate total results
@@ -42,10 +42,10 @@ const SpotifySearch: React.FC = () => {
     return sum + (Array.isArray(arr) ? arr.length : 0);
   }, 0);
 
-  // Format duration
-  const formatDuration = (ms: number): string => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
+  // Format duration - helper function for track durations
+  const formatDuration = (_ms: number): string => {
+    const minutes = Math.floor(_ms / 60000);
+    const seconds = Math.floor((_ms % 60000) / 1000);
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
   };
 

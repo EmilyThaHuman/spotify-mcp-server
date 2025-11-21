@@ -590,6 +590,7 @@ async function exchangeCodeForToken(code: string, clientId: string, clientSecret
 }
 
 // Temporary in-memory storage for pending auth states (in production, use KV with expiration)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const pendingAuthStates = new Map<string, { userId: string; createdAt: number }>();
 
 // Cloudflare Worker handler

@@ -1,7 +1,9 @@
+// Import is used by other files that import from this module
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useOpenAiGlobal } from "./use-openai-global";
 
 export function useWidgetProps<T extends Record<string, unknown>>(
-  defaultState?: T | (() => T)
+  _defaultState?: T | (() => T)
 ): T {
   // Mock data for spotify widgets
   const mockData = {
