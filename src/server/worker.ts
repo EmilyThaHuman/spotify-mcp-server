@@ -589,10 +589,6 @@ async function exchangeCodeForToken(code: string, clientId: string, clientSecret
   return response.json();
 }
 
-// Temporary in-memory storage for pending auth states (in production, use KV with expiration)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const pendingAuthStates = new Map<string, { userId: string; createdAt: number }>();
-
 // Cloudflare Worker handler
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {

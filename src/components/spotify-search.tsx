@@ -42,13 +42,6 @@ const SpotifySearch: React.FC<SpotifySearchProps> = (defaultProps) => {
     return sum + (Array.isArray(arr) ? arr.length : 0);
   }, 0);
 
-  // Format duration - helper function for track durations
-  const formatDuration = (_ms: number): string => {
-    const minutes = Math.floor(_ms / 60000);
-    const seconds = Math.floor((_ms % 60000) / 1000);
-    return `${minutes}:${String(seconds).padStart(2, '0')}`;
-  };
-
   // Handle add button click
   const handleAddTrack = (track: Track) => {
     setAddedTracks((prev) => {
@@ -104,8 +97,6 @@ const SpotifySearch: React.FC<SpotifySearchProps> = (defaultProps) => {
             : "bg-white border-gray-200"
         )}>
           {tracks.slice(0, 20).map((track, index) => {
-            const isAdded = addedTracks.has(track.id);
-
             return (
               <div key={track.id}>
                 <div
