@@ -44,27 +44,53 @@ type SpotifyWidget = {
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = path.resolve(__dirname, "..");
-const UI_COMPONENTS_DIR = path.resolve(ROOT_DIR, "ui-components");
+const ROOT_DIR = path.resolve(__dirname, "..", "..");
+const ASSETS_DIR = path.resolve(ROOT_DIR, "assets");
 
 // Store OAuth state and tokens in memory (use database in production)
 const authSessions = new Map<string, { accessToken: string; refreshToken: string; expiresAt: number }>();
 const pendingAuthStates = new Map<string, { sessionId: string; createdAt: number }>();
 
 function readWidgetHtml(componentName: string): string {
-  if (!fs.existsSync(UI_COMPONENTS_DIR)) {
-    console.warn(`Widget components directory not found at ${UI_COMPONENTS_DIR}`);
-    return `<!DOCTYPE html><html><body><div id="root">Widget: ${componentName}</div></body></html>`;
+  if (!fs.existsSync(ASSETS_DIR)) {
+    throw new Error(
+      `Widget assets not found. Expected directory ${ASSETS_DIR}. Run "npm run build" before starting the server.`
+    );
   }
 
-  const htmlPath = path.join(UI_COMPONENTS_DIR, `${componentName}.html`);
-  
-  if (fs.existsSync(htmlPath)) {
-    return fs.readFileSync(htmlPath, "utf8");
+  // Try direct path first
+  const directPath = path.join(ASSETS_DIR, `${componentName}.html`);
+  let htmlContents: string | null = null;
+
+  if (fs.existsSync(directPath)) {
+    htmlContents = fs.readFileSync(directPath, "utf8");
   } else {
-    console.warn(`Widget HTML for "${componentName}" not found`);
-    return `<!DOCTYPE html><html><body><div id="root">Widget: ${componentName}</div></body></html>`;
+    // Check for versioned files like "component-hash.html"
+    const candidates = fs
+      .readdirSync(ASSETS_DIR)
+      .filter(
+        (file) => file.startsWith(`${componentName}-`) && file.endsWith(".html")
+      )
+      .sort();
+    const fallback = candidates[candidates.length - 1];
+    if (fallback) {
+      htmlContents = fs.readFileSync(path.join(ASSETS_DIR, fallback), "utf8");
+    } else {
+      // Check in src/components subdirectory as fallback
+      const nestedPath = path.join(ASSETS_DIR, "src", "components", `${componentName}.html`);
+      if (fs.existsSync(nestedPath)) {
+        htmlContents = fs.readFileSync(nestedPath, "utf8");
+      }
+    }
   }
+
+  if (!htmlContents) {
+    throw new Error(
+      `Widget HTML for "${componentName}" not found in ${ASSETS_DIR}. Run "npm run build" to generate the assets.`
+    );
+  }
+
+  return htmlContents;
 }
 
 function widgetMeta(widget: SpotifyWidget) {
@@ -99,86 +125,86 @@ widgets.forEach((widget) => {
 
 // Tool input schemas
 const addToLibrarySchema = {
-  type: "object",
+  type: "object" as const,
   properties: {
     itemType: {
-      type: "string",
+      type: "string" as const,
       description: "Type of content to add",
-      enum: ["track", "album", "artist", "playlist", "show", "episode"],
+      enum: ["track", "album", "artist", "playlist", "show", "episode"] as const,
     },
     itemId: {
-      type: "string",
+      type: "string" as const,
       description: "Spotify ID of the item to add",
     },
   },
   required: ["itemType", "itemId"],
   additionalProperties: false,
-} as const;
+};
 
 const removeFromLibrarySchema = {
-  type: "object",
+  type: "object" as const,
   properties: {
     itemType: {
-      type: "string",
+      type: "string" as const,
       description: "Type of content to remove",
-      enum: ["track", "album", "artist", "playlist", "show", "episode"],
+      enum: ["track", "album", "artist", "playlist", "show", "episode"] as const,
     },
     itemId: {
-      type: "string",
+      type: "string" as const,
       description: "Spotify ID of the item to remove",
     },
   },
   required: ["itemType", "itemId"],
   additionalProperties: false,
-} as const;
+};
 
 const fetchTracksSchema = {
-  type: "object",
+  type: "object" as const,
   properties: {
     playlistId: {
-      type: "string",
+      type: "string" as const,
       description: "Spotify playlist ID",
     },
     offset: {
-      type: "number",
+      type: "number" as const,
       description: "The index of the first item to return",
     },
     limit: {
-      type: "number",
+      type: "number" as const,
       description: "Maximum number of items to return (max 100)",
     },
   },
   required: ["playlistId"],
   additionalProperties: false,
-} as const;
+};
 
 const searchSchema = {
-  type: "object",
+  type: "object" as const,
   properties: {
     query: {
-      type: "string",
+      type: "string" as const,
       description: "Search query string",
     },
     types: {
-      type: "array",
+      type: "array" as const,
       items: {
-        type: "string",
-        enum: ["track", "album", "artist", "playlist", "show", "episode"],
+        type: "string" as const,
+        enum: ["track", "album", "artist", "playlist", "show", "episode"] as const,
       },
       description: "Types of content to search for",
     },
     limit: {
-      type: "number",
+      type: "number" as const,
       description: "Maximum number of results per type (max 50)",
     },
     market: {
-      type: "string",
+      type: "string" as const,
       description: "ISO 3166-1 alpha-2 country code",
     },
   },
   required: ["query"],
   additionalProperties: false,
-} as const;
+};
 
 // Zod parsers
 const addToLibraryParser = z.object({

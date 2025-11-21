@@ -1,41 +1,26 @@
 # Wrangler Configuration for Spotify MCP Server
 name = "spotify-mcp-server"
-main = "src/worker.ts"
+main = "src/server/worker.ts"
 compatibility_date = "2025-01-23"
 compatibility_flags = ["nodejs_compat"]
-
-# Worker Settings
 workers_dev = true
 
-# Environment Variables (set using wrangler secret)
-# SPOTIFY_CLIENT_ID - Your Spotify App Client ID
-# SPOTIFY_CLIENT_SECRET - Your Spotify App Client Secret
-# SPOTIFY_REDIRECT_URI - OAuth redirect URI (e.g., https://your-worker.workers.dev/auth/callback)
-
 # KV Namespace for storing OAuth tokens
+# Run: wrangler kv:namespace create SPOTIFY_TOKENS
+# Then update the ID below
 [[kv_namespaces]]
 binding = "SPOTIFY_TOKENS"
-id = "your_kv_namespace_id_here"
-preview_id = "your_preview_kv_namespace_id_here"
+id = "8ba8fce73b8447868bd539118a75d5c3"
 
-# Development Configuration
-[dev]
-port = 8787
-local_protocol = "http"
-
-# Routes (optional - for custom domains)
-# routes = [
-#   { pattern = "spotify-mcp.example.com/*", zone_name = "example.com" }
-# ]
-
-# Build Configuration
-[build]
-command = "npm run build"
-
-# Custom Build Settings
-[build.upload]
-format = "service-worker"
+# Environment Variables (set these as secrets with: wrangler secret put <NAME>)
+# SPOTIFY_CLIENT_ID - Set via: wrangler secret put SPOTIFY_CLIENT_ID
+# SPOTIFY_CLIENT_SECRET - Set via: wrangler secret put SPOTIFY_CLIENT_SECRET
+# SPOTIFY_REDIRECT_URI - Set via: wrangler secret put SPOTIFY_REDIRECT_URI
 
 # Environment Configuration
 [env.production]
 name = "spotify-mcp-server-production"
+
+[[env.production.kv_namespaces]]
+binding = "SPOTIFY_TOKENS"
+id = "8ba8fce73b8447868bd539118a75d5c3"

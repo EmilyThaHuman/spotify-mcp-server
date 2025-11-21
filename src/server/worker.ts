@@ -533,6 +533,65 @@ async function spotifyApiRequest(
   return response.json();
 }
 
+// Helper function to generate auth URL (for MCP tool response)
+function generateAuthUrl(state: string, clientId: string, redirectUri: string): string {
+  const scopes = [
+    "user-library-read",
+    "user-library-modify",
+    "user-follow-read",
+    "user-follow-modify",
+    "playlist-read-private",
+    "playlist-read-collaborative",
+    "playlist-modify-public",
+    "playlist-modify-private",
+    "user-read-private",
+    "user-read-email",
+    "user-top-read",
+    "user-read-recently-played",
+  ];
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    response_type: "code",
+    redirect_uri: redirectUri,
+    state: state,
+    scope: scopes.join(" "),
+    show_dialog: "true",
+  });
+
+  return `https://accounts.spotify.com/authorize?${params.toString()}`;
+}
+
+// Helper function to exchange code for token
+async function exchangeCodeForToken(code: string, clientId: string, clientSecret: string, redirectUri: string): Promise<{
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+}> {
+  const response = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+    },
+    body: new URLSearchParams({
+      grant_type: "authorization_code",
+      code: code,
+      redirect_uri: redirectUri,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to exchange code for token: ${response.statusText} - ${error}`);
+  }
+
+  return response.json();
+}
+
+// Temporary in-memory storage for pending auth states (in production, use KV with expiration)
+const pendingAuthStates = new Map<string, { userId: string; createdAt: number }>();
+
 // Cloudflare Worker handler
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -548,6 +607,128 @@ export default {
     // Handle OPTIONS preflight
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders });
+    }
+
+    // Handle OAuth callback (user returns from Spotify authorization)
+    if (url.pathname === "/auth/callback" && request.method === "GET") {
+      const code = url.searchParams.get("code");
+      const state = url.searchParams.get("state");
+      const error = url.searchParams.get("error");
+
+      if (error) {
+        return new Response(`
+          <!DOCTYPE html>
+          <html>
+            <head><title>Authentication Failed</title></head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; text-align: center;">
+              <h1 style="color: #d32f2f;">Authentication Failed</h1>
+              <p style="color: #666; margin: 20px 0;">Error: ${error}</p>
+              <p style="color: #666;">Please close this window and try again.</p>
+            </body>
+          </html>
+        `, {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "text/html" },
+        });
+      }
+
+      if (!code || !state) {
+        return new Response(`
+          <!DOCTYPE html>
+          <html>
+            <head><title>Missing Parameters</title></head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; text-align: center;">
+              <h1 style="color: #d32f2f;">Missing Parameters</h1>
+              <p style="color: #666;">Required parameters (code or state) are missing.</p>
+            </body>
+          </html>
+        `, { 
+          status: 400, 
+          headers: { ...corsHeaders, "Content-Type": "text/html" }
+        });
+      }
+
+      try {
+        // Extract userId from state (format: userId)
+        const userId = state || "default";
+        
+        // Use the deployed worker URL for redirect
+        const redirectUri = `${url.origin}/auth/callback`;
+        const tokenData = await exchangeCodeForToken(
+          code, 
+          env.SPOTIFY_CLIENT_ID, 
+          env.SPOTIFY_CLIENT_SECRET,
+          redirectUri
+        );
+
+        // Store tokens in KV with userId as key
+        await env.SPOTIFY_TOKENS.put(userId, JSON.stringify({
+          accessToken: tokenData.access_token,
+          refreshToken: tokenData.refresh_token,
+          expiresAt: Date.now() + tokenData.expires_in * 1000,
+        }));
+
+        return new Response(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Successfully Connected!</title>
+              <style>
+                body { 
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+                  padding: 40px; 
+                  text-align: center;
+                  background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
+                  color: white;
+                  min-height: 100vh;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  flex-direction: column;
+                }
+                h1 { font-size: 32px; margin-bottom: 16px; }
+                p { font-size: 18px; opacity: 0.9; }
+                .checkmark { 
+                  font-size: 64px; 
+                  margin-bottom: 24px;
+                  animation: scale-in 0.3s ease-out;
+                }
+                @keyframes scale-in {
+                  from { transform: scale(0); }
+                  to { transform: scale(1); }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="checkmark">✓</div>
+              <h1>Successfully Connected to Spotify!</h1>
+              <p>You can now close this window and return to your chat.</p>
+              <script>
+                setTimeout(() => window.close(), 3000);
+              </script>
+            </body>
+          </html>
+        `, {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "text/html" },
+        });
+      } catch (error: any) {
+        console.error("Failed to exchange code for token", error);
+        return new Response(`
+          <!DOCTYPE html>
+          <html>
+            <head><title>Authentication Error</title></head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; text-align: center;">
+              <h1 style="color: #d32f2f;">Authentication Error</h1>
+              <p style="color: #666; margin: 20px 0;">${error.message}</p>
+              <p style="color: #666;">Please close this window and try again.</p>
+            </body>
+          </html>
+        `, {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "text/html" },
+        });
+      }
     }
 
     // Handle RPC-style MCP requests
@@ -602,7 +783,7 @@ export default {
             const toolName = body.params?.name;
             const args = body.params?.arguments || {};
 
-            response = await handleToolCall(env, userId, toolName, args);
+            response = await handleToolCall(env, userId, toolName, args, url.origin);
             break;
           }
 
@@ -631,7 +812,26 @@ export default {
   },
 };
 
-async function handleToolCall(env: Env, userId: string, toolName: string, args: any) {
+async function handleToolCall(env: Env, userId: string, toolName: string, args: any, workerUrl: string) {
+  // Check authentication for all tools
+  const tokenData = await env.SPOTIFY_TOKENS.get(userId, "json") as any;
+  
+  if (!tokenData) {
+    // Generate auth URL (like Figma does)
+    const state = userId;
+    const redirectUri = `${workerUrl}/auth/callback`;
+    const authUrl = generateAuthUrl(state, env.SPOTIFY_CLIENT_ID, redirectUri);
+    
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Please authenticate with Spotify to use this feature. Visit: ${authUrl}`,
+        },
+      ],
+    };
+  }
+
   switch (toolName) {
     case "add_to_library": {
       const parsed = addToLibraryParser.parse(args);
