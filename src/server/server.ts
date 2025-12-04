@@ -474,12 +474,27 @@ function createSpotifyServer(sessionId: string): Server {
         throw new Error(`Unknown resource: ${request.params.uri}`);
       }
 
+      // Re-read HTML file on each request to avoid caching stale content
+      // This ensures we always serve the latest widget HTML after rebuilds
+      let html = widget.html;
+      try {
+        const freshHtml = readWidgetHtml(widget.id);
+        if (freshHtml) {
+          html = freshHtml;
+          // Update cached version for next time
+          widget.html = freshHtml;
+        }
+      } catch (error) {
+        // If reading fails, use cached version
+        console.warn(`Failed to re-read widget HTML for ${widget.id}, using cached version:`, error);
+      }
+
       return {
         contents: [
           {
             uri: widget.templateUri,
             mimeType: "text/html+skybridge",
-            text: widget.html,
+            text: html,
             _meta: widgetMeta(widget),
           },
         ],
