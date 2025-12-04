@@ -21,6 +21,17 @@ export default defineConfig({
             return '[name][extname]';
           }
           return '[name]-[hash][extname]';
+        },
+        // Keep preview and spotify-search chunks separate to avoid including mock data
+        manualChunks: (id) => {
+          // Separate preview code from production widget code
+          if (id.includes('preview') || id.includes('dev/preview')) {
+            return 'preview';
+          }
+          // Keep spotify-search components together
+          if (id.includes('components/spotify-search')) {
+            return 'spotify-search';
+          }
         }
       }
     }
