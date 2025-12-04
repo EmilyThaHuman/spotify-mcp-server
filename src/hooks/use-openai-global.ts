@@ -31,8 +31,20 @@ export function useOpenAiGlobal<K extends keyof OpenAiGlobals>(
         window.removeEventListener(SET_GLOBALS_EVENT_TYPE, handleSetGlobal);
       };
     },
-    () => window.openai?.[key] ?? null,
-    () => window.openai?.[key] ?? null
+    () => {
+      // Safely access window.openai with fallback
+      if (typeof window !== 'undefined' && window.openai) {
+        return window.openai[key] ?? null;
+      }
+      return null;
+    },
+    () => {
+      // Safely access window.openai with fallback
+      if (typeof window !== 'undefined' && window.openai) {
+        return window.openai[key] ?? null;
+      }
+      return null;
+    }
   );
 }
 

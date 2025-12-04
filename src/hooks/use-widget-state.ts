@@ -32,16 +32,21 @@ export function useWidgetState<T extends UnknownObject>(
       _setWidgetState((prevState) => {
         const newState = typeof state === "function" ? state(prevState) : state;
 
-        if (newState != null) {
-          // Try to use window.openai.setWidgetState if available
-          if (typeof window !== 'undefined' && window.openai?.setWidgetState) {
-            window.openai.setWidgetState(newState);
+        if (newState != null && typeof window !== 'undefined') {
+          try {
+            // Try to use window.openai.setWidgetState if available
+            if (window.openai?.setWidgetState) {
+              window.openai.setWidgetState(newState);
+            }
+            // Fallback: try window.openai.skybridge.setState (ZeroTwo renderer)
+            else if ((window.openai as any)?.skybridge?.setState) {
+              (window.openai as any).skybridge.setState(newState);
+            }
+            // If neither exists, just update local state (no persistence)
+          } catch (error) {
+            // Silently fail if setWidgetState is not available
+            console.warn('[useWidgetState] setWidgetState not available:', error);
           }
-          // Fallback: try window.openai.skybridge.setState (ZeroTwo renderer)
-          else if (typeof window !== 'undefined' && (window.openai as any)?.skybridge?.setState) {
-            (window.openai as any).skybridge.setState(newState);
-          }
-          // If neither exists, just update local state (no persistence)
         }
 
         return newState;
