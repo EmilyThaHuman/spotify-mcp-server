@@ -489,6 +489,12 @@ function createSpotifyServer(sessionId: string): Server {
         console.warn(`Failed to re-read widget HTML for ${widget.id}, using cached version:`, error);
       }
 
+      // Log which bundle is referenced in the HTML for debugging
+      const bundleMatch = html.match(/spotify-search-([A-Za-z0-9_-]+)\.js/);
+      if (bundleMatch) {
+        console.log(`[ReadResource] Serving widget ${widget.id} with bundle: ${bundleMatch[1]}`);
+      }
+
       return {
         contents: [
           {
