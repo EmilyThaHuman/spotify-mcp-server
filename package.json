@@ -5,6 +5,8 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
+    "clean": "rm -rf dist assets node_modules/.cache .vite .wrangler",
+    "prebuild": "npm run clean",
     "build": "tsc && vite build",
     "build:server": "tsc -p tsconfig.build.json",
     "build:widgets": "vite build",
