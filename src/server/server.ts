@@ -418,9 +418,10 @@ async function spotifyApiRequest(
   sessionId: string,
   endpoint: string,
   method: string = "GET",
-  body?: any
+  body?: any,
+  accessTokenOverride?: string
 ): Promise<any> {
-  const accessToken = await getValidAccessToken(sessionId);
+  const accessToken = accessTokenOverride || await getValidAccessToken(sessionId);
   
   const response = await fetch(`${SPOTIFY_API_BASE}${endpoint}`, {
     method,
@@ -506,7 +507,27 @@ function createSpotifyServer(sessionId: string): Server {
       const toolName = request.params.name;
 
       // Check authentication for all tools
-      if (!authSessions.has(sessionId)) {
+      // First check if we have session tokens
+      let accessToken: string | null = null;
+      
+      if (authSessions.has(sessionId)) {
+        accessToken = await getValidAccessToken(sessionId);
+      } else {
+        // Fallback: Check for Authorization header stored in session (from HTTP request)
+        // This allows tokens from user profile to be passed via headers
+        const storedAuthHeader = sessionAuthHeaders.get(sessionId);
+        if (storedAuthHeader && storedAuthHeader.startsWith("Bearer ")) {
+          accessToken = storedAuthHeader.substring(7);
+          // Store in session for future use (without refresh token - will need re-auth when expired)
+          authSessions.set(sessionId, {
+            accessToken: accessToken,
+            refreshToken: "", // We don't have refresh token from header
+            expiresAt: Date.now() + 3600000, // Assume 1 hour expiration
+          });
+        }
+      }
+
+      if (!accessToken) {
         // Generate auth URL
         const state = crypto.randomBytes(16).toString("hex");
         pendingAuthStates.set(state, { sessionId, createdAt: Date.now() });
@@ -549,7 +570,7 @@ function createSpotifyServer(sessionId: string): Server {
               throw new Error(`Unsupported item type: ${args.itemType}`);
           }
 
-          await spotifyApiRequest(sessionId, endpoint, "PUT", { ids });
+          await spotifyApiRequest(sessionId, endpoint, "PUT", { ids }, accessToken);
 
           return {
             content: [
@@ -587,7 +608,7 @@ function createSpotifyServer(sessionId: string): Server {
               throw new Error(`Unsupported item type: ${args.itemType}`);
           }
 
-          await spotifyApiRequest(sessionId, endpoint, "DELETE", { ids });
+          await spotifyApiRequest(sessionId, endpoint, "DELETE", { ids }, accessToken);
 
           return {
             content: [
@@ -604,14 +625,20 @@ function createSpotifyServer(sessionId: string): Server {
           
           const data = await spotifyApiRequest(
             sessionId,
-            `/playlists/${args.playlistId}/tracks?offset=${args.offset || 0}&limit=${args.limit || 100}`
+            `/playlists/${args.playlistId}/tracks?offset=${args.offset || 0}&limit=${args.limit || 100}`,
+            "GET",
+            undefined,
+            accessToken
           );
 
           // Check which tracks are saved
           const trackIds = data.items.map((item: any) => item.track.id);
           const savedStatus = await spotifyApiRequest(
             sessionId,
-            `/me/tracks/contains?ids=${trackIds.join(",")}`
+            `/me/tracks/contains?ids=${trackIds.join(",")}`,
+            "GET",
+            undefined,
+            accessToken
           );
 
           const tracks = data.items.map((item: any, index: number) => ({
@@ -663,7 +690,10 @@ function createSpotifyServer(sessionId: string): Server {
 
           const searchResults = await spotifyApiRequest(
             sessionId,
-            `/search?q=${encodeURIComponent(args.query)}&type=${types.join(",")}&limit=${limit}&market=${market}`
+            `/search?q=${encodeURIComponent(args.query)}&type=${types.join(",")}&limit=${limit}&market=${market}`,
+            "GET",
+            undefined,
+            accessToken
           );
 
           const results: any = {};
@@ -746,23 +776,41 @@ function createSpotifyServer(sessionId: string): Server {
 type SessionRecord = {
   server: Server;
   transport: SSEServerTransport;
+  authHeader?: string; // Store Authorization header from HTTP requests
 };
 
 const sessions = new Map<string, SessionRecord>();
+// Map to store auth headers by sessionId (for looking up during tool calls)
+const sessionAuthHeaders = new Map<string, string>();
+// Map from transport.sessionId to actualSessionId (used in createSpotifyServer closure)
+const transportToSessionId = new Map<string, string>();
 
 const ssePath = "/mcp";
 const postPath = "/mcp/messages";
 const authCallbackPath = "/auth/callback";
 
-async function handleSseRequest(res: ServerResponse, sessionId?: string) {
+async function handleSseRequest(res: ServerResponse, sessionId?: string, authHeader?: string) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   const actualSessionId = sessionId || crypto.randomBytes(16).toString("hex");
   const server = createSpotifyServer(actualSessionId);
   const transport = new SSEServerTransport(postPath, res);
 
-  sessions.set(transport.sessionId, { server, transport });
+  // Store mapping from transport.sessionId to actualSessionId
+  transportToSessionId.set(transport.sessionId, actualSessionId);
+  
+  // Store auth header if provided (use actualSessionId which matches the closure in createSpotifyServer)
+  if (authHeader) {
+    sessionAuthHeaders.set(actualSessionId, authHeader);
+  }
+
+  sessions.set(transport.sessionId, { server, transport, authHeader });
 
   transport.onclose = async () => {
+    const mappedSessionId = transportToSessionId.get(transport.sessionId);
+    if (mappedSessionId) {
+      sessionAuthHeaders.delete(mappedSessionId);
+      transportToSessionId.delete(transport.sessionId);
+    }
     sessions.delete(transport.sessionId);
     await server.close();
   };
@@ -788,7 +836,7 @@ async function handlePostMessage(
   url: URL
 ) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "content-type");
+  res.setHeader("Access-Control-Allow-Headers", "content-type, authorization");
   const sessionId = url.searchParams.get("sessionId");
 
   if (!sessionId) {
@@ -801,6 +849,21 @@ async function handlePostMessage(
   if (!session) {
     res.writeHead(404).end("Unknown session");
     return;
+  }
+
+  // Extract Authorization header from HTTP request and store in session
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  if (authHeader) {
+    const authHeaderStr = typeof authHeader === "string" ? authHeader : authHeader[0];
+    session.authHeader = authHeaderStr;
+    // Map transport.sessionId to actualSessionId and store authHeader with actualSessionId
+    const actualSessionId = transportToSessionId.get(sessionId);
+    if (actualSessionId) {
+      sessionAuthHeaders.set(actualSessionId, authHeaderStr);
+    } else {
+      // Fallback: also store with transport.sessionId in case mapping doesn't exist yet
+      sessionAuthHeaders.set(sessionId, authHeaderStr);
+    }
   }
 
   try {

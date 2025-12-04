@@ -72,3 +72,4 @@ Unfortunately, Cloudflare doesn't allow reading secret values directly. You need
 2. Or regenerate new credentials from Spotify Developer Dashboard
 3. Or check your deploy scripts (like `deploy-secrets.sh`) if they contain the values
 
+
