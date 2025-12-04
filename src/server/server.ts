@@ -58,12 +58,22 @@ function readWidgetHtml(componentName: string): string {
     );
   }
 
-  // Try direct path first
+  // Vite builds HTML files to assets/src/components/componentName.html
+  // Check this path FIRST since it's the actual build output location
+  const viteBuildPath = path.join(ASSETS_DIR, "src", "components", `${componentName}.html`);
+  if (fs.existsSync(viteBuildPath)) {
+    const htmlContents = fs.readFileSync(viteBuildPath, "utf8");
+    console.log(`[readWidgetHtml] Found HTML at Vite build path: ${viteBuildPath}`);
+    return htmlContents;
+  }
+
+  // Fallback: Try direct path
   const directPath = path.join(ASSETS_DIR, `${componentName}.html`);
   let htmlContents: string | null = null;
 
   if (fs.existsSync(directPath)) {
     htmlContents = fs.readFileSync(directPath, "utf8");
+    console.log(`[readWidgetHtml] Found HTML at direct path: ${directPath}`);
   } else {
     // Check for versioned files like "component-hash.html"
     const candidates = fs
@@ -75,12 +85,7 @@ function readWidgetHtml(componentName: string): string {
     const fallback = candidates[candidates.length - 1];
     if (fallback) {
       htmlContents = fs.readFileSync(path.join(ASSETS_DIR, fallback), "utf8");
-    } else {
-      // Check in src/components subdirectory as fallback
-      const nestedPath = path.join(ASSETS_DIR, "src", "components", `${componentName}.html`);
-      if (fs.existsSync(nestedPath)) {
-        htmlContents = fs.readFileSync(nestedPath, "utf8");
-      }
+      console.log(`[readWidgetHtml] Found HTML at versioned path: ${fallback}`);
     }
   }
 
