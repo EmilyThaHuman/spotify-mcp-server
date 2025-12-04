@@ -1,6 +1,4 @@
 node_modules
-dist
-assets
 .git
 .gitignore
 *.md
@@ -8,4 +6,5 @@ assets
 .wrangler
 .DS_Store
 *.log
+# DO NOT ignore dist and assets - they need to be built fresh in Docker
 

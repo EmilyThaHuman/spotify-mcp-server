@@ -28,7 +28,10 @@ RUN rm -rf dist assets .vite .wrangler \
 # Build timestamp to verify fresh builds
 RUN npm run build && npm run build:widgets && \
     echo "Build completed at $(date)" > /app/.build-timestamp && \
-    ls -la /app/assets/*.js 2>/dev/null | head -5 || echo "No JS files found"
+    echo "=== Built JavaScript files ===" && \
+    ls -la /app/assets/*.js 2>/dev/null | head -10 || echo "No JS files found" && \
+    echo "=== HTML file contents ===" && \
+    cat /app/assets/src/components/spotify-search.html 2>/dev/null | grep -o "spotify-search-[^.]*\.js" || echo "HTML file not found"
 
 # Expose the port
 EXPOSE 8005
