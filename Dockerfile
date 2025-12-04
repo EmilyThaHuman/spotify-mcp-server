@@ -1,6 +1,11 @@
 # Use Node.js LTS
 FROM node:20-alpine
 
+# Build argument to force cache invalidation
+ARG BUILD_DATE
+ARG BUILD_VERSION
+ARG CACHE_BUST=1
+
 # Set working directory
 WORKDIR /app
 
@@ -26,11 +31,14 @@ RUN rm -rf dist assets .vite .wrangler \
 # Build the widgets (Vite) and server (TypeScript)
 # This creates the assets/ directory with built HTML/JS/CSS
 # Build timestamp to verify fresh builds
-RUN npm run build && npm run build:widgets && \
+# CACHE_BUST ensures this layer is rebuilt every time
+RUN echo "Cache bust: $CACHE_BUST" && \
+    npm run build && npm run build:widgets && \
     echo "Build completed at $(date)" > /app/.build-timestamp && \
+    echo "Build version: $BUILD_VERSION" >> /app/.build-timestamp && \
     echo "=== Built JavaScript files ===" && \
     ls -la /app/assets/*.js 2>/dev/null | head -10 || echo "No JS files found" && \
-    echo "=== HTML file contents ===" && \
+    echo "=== HTML file bundle reference ===" && \
     cat /app/assets/src/components/spotify-search.html 2>/dev/null | grep -o "spotify-search-[^.]*\.js" || echo "HTML file not found"
 
 # Expose the port
