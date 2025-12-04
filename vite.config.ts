@@ -22,7 +22,7 @@ export default defineConfig({
           }
           return '[name]-[hash][extname]';
         },
-        // Keep preview and spotify-search chunks separate to avoid including mock data
+        // Keep preview and spotify-search chunks completely separate
         manualChunks: (id) => {
           // Separate preview code from production widget code
           if (id.includes('preview') || id.includes('dev/preview')) {
@@ -33,6 +33,11 @@ export default defineConfig({
             return 'spotify-search';
           }
         }
+      },
+      // Exclude preview from being analyzed as a dependency of spotify-search
+      external: (id) => {
+        // Don't externalize anything, but this helps Vite understand the separation
+        return false;
       }
     }
   },
