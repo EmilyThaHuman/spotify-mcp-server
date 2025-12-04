@@ -10,9 +10,9 @@ export function useWidgetProps<T extends Record<string, unknown>>(
 
   const fallback =
     typeof defaultState === "function"
-      ? (defaultState as () => T | null)()
-      : defaultState ?? null;
+      ? (defaultState as () => T)()
+      : defaultState;
 
-  return props ?? fallback;
+  return (props ?? fallback) as T;
 }
 
