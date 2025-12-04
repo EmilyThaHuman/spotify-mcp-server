@@ -1042,7 +1042,10 @@ const httpServer = createServer(
         res.writeHead(200, {
           "Content-Type": contentType,
           "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "public, max-age=3600",
+          // Disable caching for widget assets to ensure fresh content after rebuilds
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
         });
         fs.createReadStream(resolvedPath).pipe(res);
         return;
