@@ -25,8 +25,9 @@ interface SpotifySearchProps extends Record<string, unknown> {
   };
 }
 
-const SpotifySearch: React.FC<SpotifySearchProps> = (defaultProps) => {
-  const props = useWidgetProps<SpotifySearchProps>(defaultProps || {
+const SpotifySearch: React.FC<SpotifySearchProps> = () => {
+  // Get data from toolOutput via useWidgetProps hook
+  const props = useWidgetProps<SpotifySearchProps>({
     query: '',
     results: {},
   });
