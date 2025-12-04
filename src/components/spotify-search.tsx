@@ -32,6 +32,12 @@ const SpotifySearch: React.FC<SpotifySearchProps> = () => {
     results: {},
   });
 
+  // Debug logging to see what we're receiving
+  if (typeof window !== 'undefined' && (window as any).__DEBUG__) {
+    console.log('[SpotifySearch] props:', props);
+    console.log('[SpotifySearch] window.openai.toolOutput:', (window as any).openai?.toolOutput);
+  }
+
   const displayMode = useDisplayMode();
   const isDark = (displayMode as string) === 'dark' || 
     (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);

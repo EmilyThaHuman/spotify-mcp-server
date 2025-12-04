@@ -6,10 +6,11 @@ export function useWidgetProps<T extends Record<string, unknown>>(
   const toolOutput = useOpenAiGlobal("toolOutput") as any;
   
   // Extract structuredContent from toolOutput
-  // toolOutput can be:
-  // 1. The full response object with structuredContent property
-  // 2. The structuredContent itself (if OpenAI already extracted it)
-  // 3. null/undefined if tool hasn't completed yet
+  // toolOutput can be structured in multiple ways:
+  // 1. toolOutput.structuredContent (direct property)
+  // 2. toolOutput.result.structuredContent (nested in result)
+  // 3. toolOutput itself is the structuredContent (already extracted)
+  // 4. null/undefined if tool hasn't completed yet
   let props: T | undefined;
   
   if (toolOutput) {
@@ -17,8 +18,23 @@ export function useWidgetProps<T extends Record<string, unknown>>(
     if (toolOutput.structuredContent) {
       props = toolOutput.structuredContent as T;
     } 
+    // Check if nested in result property (common in some widget systems)
+    else if (toolOutput.result?.structuredContent) {
+      props = toolOutput.result.structuredContent as T;
+    }
     // Check if toolOutput itself is the structuredContent (already extracted)
-    else if (toolOutput.query !== undefined || toolOutput.results !== undefined) {
+    // Look for common properties that indicate it's the structured content
+    else if (
+      toolOutput.query !== undefined || 
+      toolOutput.results !== undefined ||
+      toolOutput.properties !== undefined ||
+      toolOutput.designs !== undefined ||
+      toolOutput.courses !== undefined ||
+      toolOutput.hotels !== undefined ||
+      toolOutput.flights !== undefined ||
+      toolOutput.bookings !== undefined ||
+      toolOutput.diagram !== undefined
+    ) {
       props = toolOutput as T;
     }
   }
