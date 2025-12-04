@@ -18,19 +18,17 @@ RUN npm ci --no-cache
 # Copy source code
 COPY src ./src
 
-# NUCLEAR OPTION: Remove EVERYTHING that could be cached or old
-# This ensures a completely fresh build every time
-RUN rm -rf dist assets node_modules/.cache .vite .wrangler \
-    && find . -name "*.js.map" -delete \
-    && find . -name "*.d.ts" -delete \
-    && echo "Cleaned all build artifacts at $(date)"
+# NUCLEAR OPTION: Remove ONLY build output directories (not node_modules cache)
+# This ensures a completely fresh build every time without breaking TypeScript
+RUN rm -rf dist assets .vite .wrangler \
+    && echo "Cleaned build artifacts at $(date)"
 
 # Build the widgets (Vite) and server (TypeScript)
 # This creates the assets/ directory with built HTML/JS/CSS
 # Build timestamp to verify fresh builds
 RUN npm run build && npm run build:widgets && \
     echo "Build completed at $(date)" > /app/.build-timestamp && \
-    ls -la /app/assets/*.js | head -5
+    ls -la /app/assets/*.js 2>/dev/null | head -5 || echo "No JS files found"
 
 # Expose the port
 EXPOSE 8005
