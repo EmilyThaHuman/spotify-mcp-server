@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { useWidgetProps } from '../hooks';
+import React, { useState, useCallback } from 'react';
+import { Loader2, Check } from 'lucide-react';
+import { useWidgetProps, useWidgetState } from '../hooks';
 import { useDisplayMode } from '../hooks/use-display-mode';
 import '../styles/index.css';
 import { cn } from '../lib/utils';
@@ -35,7 +36,14 @@ const SpotifySearch: React.FC<SpotifySearchProps> = (defaultProps) => {
     (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   const { results = {} } = props;
-  const [addedTracks, setAddedTracks] = useState<Set<string>>(new Set());
+  
+  // Use widgetState to persist added tracks across widget updates
+  const [widgetState, setWidgetState] = useWidgetState<{ addedTracks: string[] }>({
+    addedTracks: [],
+  });
+  
+  const addedTracksSet = new Set(widgetState?.addedTracks || []);
+  const [loadingTracks, setLoadingTracks] = useState<Set<string>>(new Set());
 
   // Calculate total results
   const totalResults = Object.values(results).reduce((sum, arr) => {
@@ -43,28 +51,62 @@ const SpotifySearch: React.FC<SpotifySearchProps> = (defaultProps) => {
   }, 0);
 
   // Handle add button click
-  const handleAddTrack = (track: Track) => {
-    setAddedTracks((prev) => {
+  const handleAddTrack = useCallback(async (track: Track) => {
+    const currentAddedTracks = widgetState?.addedTracks || [];
+    const isCurrentlyAdded = currentAddedTracks.includes(track.id);
+    const action = isCurrentlyAdded ? 'remove' : 'add';
+    
+    // Set loading state
+    setLoadingTracks((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(track.id)) {
-        newSet.delete(track.id);
-      } else {
-        newSet.add(track.id);
-      }
+      newSet.add(track.id);
       return newSet;
     });
 
-    // Send message to parent
-    if (window.parent && window.parent.postMessage) {
-      window.parent.postMessage({
-        type: 'spotify-track-add',
-        data: {
-          action: addedTracks.has(track.id) ? 'remove' : 'add',
-          track: track,
-        },
-      }, '*');
+    try {
+      // Call the actual Spotify API tool
+      if (typeof window !== 'undefined' && window.openai?.callTool) {
+        const toolName = isCurrentlyAdded ? 'remove_from_library' : 'add_to_library';
+        await window.openai.callTool(toolName, {
+          itemType: 'track',
+          itemId: track.id,
+        });
+
+        // Update widget state to persist the change
+        setWidgetState((prev) => {
+          const currentTracks = prev?.addedTracks || [];
+          const newTracks = isCurrentlyAdded
+            ? currentTracks.filter((id) => id !== track.id)
+            : [...currentTracks, track.id];
+          
+          return {
+            addedTracks: newTracks,
+          };
+        });
+      } else {
+        // Fallback to postMessage if callTool is not available
+        if (window.parent && window.parent.postMessage) {
+          window.parent.postMessage({
+            type: 'spotify-track-add',
+            data: {
+              action,
+              track: track,
+            },
+          }, '*');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update library:', error);
+      // Optionally show error to user
+    } finally {
+      // Clear loading state
+      setLoadingTracks((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(track.id);
+        return newSet;
+      });
     }
-  };
+  }, [widgetState?.addedTracks, setWidgetState]);
 
   // Handle track play
   const handleTrackPlay = (track: Track) => {
@@ -113,6 +155,13 @@ const SpotifySearch: React.FC<SpotifySearchProps> = (defaultProps) => {
                     src={track.image || 'https://via.placeholder.com/48'}
                     alt={track.name}
                     className="w-14 h-14 rounded-lg flex-shrink-0 object-cover"
+                    onError={(e) => {
+                      // Fallback to placeholder if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== 'https://via.placeholder.com/48') {
+                        target.src = 'https://via.placeholder.com/48';
+                      }
+                    }}
                   />
 
                   <div className="flex-1 min-w-0 mr-3">
@@ -140,24 +189,43 @@ const SpotifySearch: React.FC<SpotifySearchProps> = (defaultProps) => {
                       e.stopPropagation();
                       handleAddTrack(track);
                     }}
+                    disabled={loadingTracks.has(track.id)}
                     className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center transition-opacity duration-150",
-                      "flex-shrink-0 opacity-70 hover:opacity-100"
+                      "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-150",
+                      "flex-shrink-0",
+                      loadingTracks.has(track.id)
+                        ? "opacity-50 cursor-not-allowed"
+                        : addedTracksSet.has(track.id)
+                        ? "opacity-100"
+                        : "opacity-70 hover:opacity-100"
                     )}
-                    aria-label="Add to library"
+                    aria-label={addedTracksSet.has(track.id) ? "Remove from library" : "Add to library"}
                   >
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className={cn(
-                        isDark ? "text-white" : "text-gray-900"
-                      )}
-                    >
-                      <path d="M11.999 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18m-11 9c0-6.075 4.925-11 11-11s11 4.925 11 11-4.925 11-11 11-11-4.925-11-11"></path>
-                      <path d="M17.999 12a1 1 0 0 1-1 1h-4v4a1 1 0 1 1-2 0v-4h-4a1 1 0 1 1 0-2h4V7a1 1 0 1 1 2 0v4h4a1 1 0 0 1 1 1"></path>
-                    </svg>
+                    {loadingTracks.has(track.id) ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : addedTracksSet.has(track.id) ? (
+                      // White circle with black checkmark for added state
+                      <div className={cn(
+                        "w-5 h-5 rounded-full flex items-center justify-center",
+                        "bg-white"
+                      )}>
+                        <Check className="w-3 h-3 text-black stroke-[3]" />
+                      </div>
+                    ) : (
+                      // Plus icon for not added state
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className={cn(
+                          isDark ? "text-white" : "text-gray-900"
+                        )}
+                      >
+                        <path d="M11.999 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18m-11 9c0-6.075 4.925-11 11-11s11 4.925 11 11-4.925 11-11 11-11-4.925-11-11"></path>
+                        <path d="M17.999 12a1 1 0 0 1-1 1h-4v4a1 1 0 1 1-2 0v-4h-4a1 1 0 1 1 0-2h4V7a1 1 0 1 1 2 0v4h4a1 1 0 0 1 1 1"></path>
+                      </svg>
+                    )}
                   </button>
                 </div>
                 {index < tracks.length - 1 && (
