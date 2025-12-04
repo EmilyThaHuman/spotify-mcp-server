@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc && vite build",
     "build:server": "tsc -p tsconfig.build.json",
-    "build:widgets": "vite build && node -e \"const fs=require('fs');const path='assets/src/components/spotify-search.html';let html=fs.readFileSync(path,'utf8');html=html.replace(/<link[^>]*preview\\.js[^>]*>/gi,'');fs.writeFileSync(path,html);\"",
+    "build:widgets": "vite build && node -e \"const fs=require('fs');const path='assets/src/components/spotify-search.html';let html=fs.readFileSync(path,'utf8');html=html.replace(/<link[^>]*preview[^>]*>/gi,'');fs.writeFileSync(path,html);\"",
     "dev": "tsx src/server/server.ts",
     "dev:preview": "vite",
     "start": "node dist/server.js",
