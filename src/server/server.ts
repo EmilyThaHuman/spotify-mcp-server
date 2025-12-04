@@ -1050,6 +1050,31 @@ const httpServer = createServer(
         };
         const contentType = contentTypes[ext] || "application/octet-stream";
         
+        // Get file stats for ETag generation
+        const stats = fs.statSync(resolvedPath);
+        const fileContent = fs.readFileSync(resolvedPath, "utf8");
+        // Generate ETag from file modification time and size for cache invalidation
+        const etag = crypto.createHash("md5").update(`${stats.mtimeMs}-${stats.size}`).digest("hex");
+        
+        // Check if client has cached version
+        const ifNoneMatch = req.headers["if-none-match"];
+        if (ifNoneMatch === etag) {
+          res.writeHead(304, {
+            "ETag": etag,
+            "Cache-Control": "no-cache, must-revalidate",
+          });
+          res.end();
+          return;
+        }
+        
+        // Log which bundle is referenced for HTML files (for debugging)
+        if (ext === ".html" && fileContent.includes("spotify-search-")) {
+          const bundleMatch = fileContent.match(/spotify-search-([A-Za-z0-9_-]+)\.js/);
+          if (bundleMatch) {
+            console.log(`[HTTP] Serving ${assetPath} with bundle: ${bundleMatch[1]}`);
+          }
+        }
+        
         res.writeHead(200, {
           "Content-Type": contentType,
           "Access-Control-Allow-Origin": "*",
@@ -1057,8 +1082,10 @@ const httpServer = createServer(
           "Cache-Control": "no-cache, no-store, must-revalidate",
           "Pragma": "no-cache",
           "Expires": "0",
+          "ETag": etag,
+          "Last-Modified": stats.mtime.toUTCString(),
         });
-        fs.createReadStream(resolvedPath).pipe(res);
+        res.end(fileContent);
         return;
       }
     }
