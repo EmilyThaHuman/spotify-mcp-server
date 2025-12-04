@@ -12,15 +12,20 @@ COPY vite.config.ts ./
 COPY postcss.config.js ./
 COPY tailwind.config.ts ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (no cache to ensure fresh installs)
+RUN npm ci --no-cache
 
 # Copy source code
 COPY src ./src
 
+# Clear any existing build artifacts and node cache
+RUN rm -rf dist assets node_modules/.cache .vite
+
 # Build the widgets (Vite) and server (TypeScript)
 # This creates the assets/ directory with built HTML/JS/CSS
-RUN npm run build
+# Add timestamp to force rebuild
+RUN npm run build && npm run build:widgets && \
+    echo "Build completed at $(date)" > /app/.build-timestamp
 
 # Expose the port
 EXPOSE 8005

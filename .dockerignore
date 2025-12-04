@@ -1,0 +1,11 @@
+node_modules
+dist
+assets
+.git
+.gitignore
+*.md
+.vscode
+.wrangler
+.DS_Store
+*.log
+
