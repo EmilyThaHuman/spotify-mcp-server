@@ -26,7 +26,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node", "@cloudflare/workers-types"],
+    "types": ["node"],
     "paths": {
       "@/*": ["./src/*"]
     }

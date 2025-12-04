@@ -1,9 +1,25 @@
 import { useOpenAiGlobal } from "./use-openai-global";
+import { useEffect, useState } from "react";
 
 export function useWidgetProps<T extends Record<string, unknown>>(
   defaultState?: T | (() => T)
 ): T {
   const toolOutput = useOpenAiGlobal("toolOutput") as any;
+  
+  // Also check for props injected via window.__WIDGET_PROPS__ (used by ZeroTwo renderer)
+  const [injectedProps, setInjectedProps] = useState<T | undefined>(() => {
+    if (typeof window !== 'undefined' && (window as any).__WIDGET_PROPS__) {
+      return (window as any).__WIDGET_PROPS__ as T;
+    }
+    return undefined;
+  });
+
+  useEffect(() => {
+    // Listen for props updates
+    if (typeof window !== 'undefined' && (window as any).__WIDGET_PROPS__) {
+      setInjectedProps((window as any).__WIDGET_PROPS__ as T);
+    }
+  }, []);
   
   // Extract structuredContent from toolOutput
   // toolOutput can be structured in multiple ways:
@@ -13,7 +29,12 @@ export function useWidgetProps<T extends Record<string, unknown>>(
   // 4. null/undefined if tool hasn't completed yet
   let props: T | undefined;
   
-  if (toolOutput) {
+  // First check injected props (highest priority - directly injected by renderer)
+  if (injectedProps) {
+    props = injectedProps;
+  }
+  // Then check toolOutput
+  else if (toolOutput) {
     // Check if toolOutput has structuredContent property
     if (toolOutput.structuredContent) {
       props = toolOutput.structuredContent as T;
