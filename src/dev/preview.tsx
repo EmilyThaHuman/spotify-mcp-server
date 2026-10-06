@@ -7,63 +7,107 @@ import SpotifySearch from '../components/spotify-search';
 
 // Mock data for preview mode
 const mockSpotifySearch = {
-  query: 'jazz piano',
+  query: '',
   results: {
     tracks: [
       {
-        id: '1',
-        name: 'Take Five',
-        artists: 'Dave Brubeck Quartet',
-        album: 'Time Out',
-        duration_ms: 324000,
-        image: 'https://i.scdn.co/image/ab67616d0000b273e3d2a0c7e5e7e7e7e7e7e7e7',
+        id: '2FAZskT9yRjp2Oow9szJD8',
+        uri: 'spotify:track:2FAZskT9yRjp2Oow9szJD8',
+        name: 'The Days - NOTION Remix',
+        album: 'The Days (NOTION Remix)',
+        image: 'https://i.scdn.co/image/ab67616d0000b2739041b9965925059507fb44af',
+        artists: 'Chrystal, NOTION',
         explicit: false,
-        uri: 'spotify:track:1',
-        external_url: 'https://open.spotify.com/track/1',
+        duration_ms: 233229,
+        external_url: 'https://open.spotify.com/track/2FAZskT9yRjp2Oow9szJD8',
       },
       {
-        id: '2',
-        name: 'Autumn Leaves',
-        artists: 'Bill Evans',
-        album: 'Portrait in Jazz',
-        duration_ms: 287000,
-        image: 'https://i.scdn.co/image/ab67616d0000b273a1b2c3d4e5f6a7b8c9d0e1f2',
+        id: '0nrRP2bk19rLc0orkWPQk2',
+        uri: 'spotify:track:0nrRP2bk19rLc0orkWPQk2',
+        name: 'Wake Me Up',
+        album: 'True',
+        image: 'https://i.scdn.co/image/ab67616d0000b273e14f11f796cef9f9a82691a7',
+        artists: 'Avicii',
         explicit: false,
-        uri: 'spotify:track:2',
-        external_url: 'https://open.spotify.com/track/2',
+        duration_ms: 247426,
+        external_url: 'https://open.spotify.com/track/0nrRP2bk19rLc0orkWPQk2',
       },
       {
-        id: '3',
-        name: 'So What',
-        artists: 'Miles Davis',
-        album: 'Kind of Blue',
-        duration_ms: 562000,
-        image: 'https://i.scdn.co/image/ab67616d0000b273f1e2d3c4b5a6978869706162',
+        id: '6qn9YLKt13AGvpq9jfO8py',
+        uri: 'spotify:track:6qn9YLKt13AGvpq9jfO8py',
+        name: 'We Found Love',
+        album: 'Talk That Talk',
+        image: 'https://i.scdn.co/image/ab67616d0000b273bef074de9ca825bddaeb9f46',
+        artists: 'Rihanna, Calvin Harris',
         explicit: false,
-        uri: 'spotify:track:3',
-        external_url: 'https://open.spotify.com/track/3',
+        duration_ms: 215226,
+        external_url: 'https://open.spotify.com/track/6qn9YLKt13AGvpq9jfO8py',
       },
       {
-        id: '4',
-        name: 'Round Midnight',
-        artists: 'Thelonious Monk',
-        album: 'Genius of Modern Music',
-        duration_ms: 318000,
-        image: 'https://i.scdn.co/image/ab67616d0000b273a2b3c4d5e6f7a8b9c0d1e2f3',
-        explicit: false,
-        uri: 'spotify:track:4',
-        external_url: 'https://open.spotify.com/track/4',
+        id: '3cZajhyr8LmtPfHZ9296tj',
+        uri: 'spotify:track:3cZajhyr8LmtPfHZ9296tj',
+        name: 'No Broke Boys',
+        album: 'No Broke Boys',
+        image: 'https://i.scdn.co/image/ab67616d0000b2735dcede7ece7b2cb72cee4eee',
+        artists: 'Disco Lines, Tinashe',
+        explicit: true,
+        duration_ms: 163994,
+        external_url: 'https://open.spotify.com/track/3cZajhyr8LmtPfHZ9296tj',
       },
       {
-        id: '5',
-        name: 'Blue in Green',
-        artists: 'Miles Davis, Bill Evans',
-        album: 'Kind of Blue',
-        duration_ms: 337000,
-        image: 'https://i.scdn.co/image/ab67616d0000b273f1e2d3c4b5a6978869706162',
+        id: '536L9C0N7vhYdibCJx3cI2',
+        uri: 'spotify:track:536L9C0N7vhYdibCJx3cI2',
+        name: 'The Wreck of the Edmund Fitzgerald',
+        album: 'Summertime Dream',
+        image: 'https://i.scdn.co/image/ab67616d0000b2737e12e3a6154eb79f0ee4b36c',
+        artists: 'Gordon Lightfoot',
         explicit: false,
-        uri: 'spotify:track:5',
-        external_url: 'https://open.spotify.com/track/5',
+        duration_ms: 389280,
+        external_url: 'https://open.spotify.com/track/536L9C0N7vhYdibCJx3cI2',
+      },
+      {
+        id: '5QdDGGw9KsHjHbILaIFRqb',
+        uri: 'spotify:track:5QdDGGw9KsHjHbILaIFRqb',
+        name: 'The Wreck of the Edmund Fitzgerald',
+        album: 'The Wreck of the Edmund Fitzgerald',
+        image: 'https://i.scdn.co/image/ab67616d0000b2731324b6612d2041a5e9c2da8f',
+        artists: 'Home Free',
+        explicit: false,
+        duration_ms: 366933,
+        external_url: 'https://open.spotify.com/track/5QdDGGw9KsHjHbILaIFRqb',
+      },
+      {
+        id: '2E7FWjLnz2oityrVVU04uM',
+        uri: 'spotify:track:2E7FWjLnz2oityrVVU04uM',
+        name: 'The Wreck of the Edmund Fitzgerald',
+        album: 'Songbook',
+        image: 'https://i.scdn.co/image/ab67616d0000b2730375c7c45bcd78168b30c714',
+        artists: 'Gordon Lightfoot',
+        explicit: false,
+        duration_ms: 388800,
+        external_url: 'https://open.spotify.com/track/2E7FWjLnz2oityrVVU04uM',
+      },
+      {
+        id: '7kjQTlVdjlNr8o37OhDpIm',
+        uri: 'spotify:track:7kjQTlVdjlNr8o37OhDpIm',
+        name: 'The Wreck of the Edmund Fitzgerald',
+        album: 'Caught in the Net',
+        image: 'https://i.scdn.co/image/ab67616d0000b2734ddec75f1f92094716f3ba83',
+        artists: 'The Longest Johns',
+        explicit: false,
+        duration_ms: 289000,
+        external_url: 'https://open.spotify.com/track/7kjQTlVdjlNr8o37OhDpIm',
+      },
+      {
+        id: '3WUVzOFltfSz7AU648MGq4',
+        uri: 'spotify:track:3WUVzOFltfSz7AU648MGq4',
+        name: 'Wreck of the Edmund Fitzgerald',
+        album: 'Hell on Church Street',
+        image: 'https://i.scdn.co/image/ab67616d0000b273e993ac49dc78a4e83313f797',
+        artists: 'Punch Brothers',
+        explicit: false,
+        duration_ms: 285976,
+        external_url: 'https://open.spotify.com/track/3WUVzOFltfSz7AU648MGq4',
       },
     ],
   },
@@ -83,6 +127,54 @@ function App() {
     } else {
       document.documentElement.classList.remove('dark');
     }
+  }, [isDark]);
+
+  // Inject mock data and mock OpenAI API into window
+  useEffect(() => {
+    (window as any).__WIDGET_PROPS__ = mockSpotifySearch;
+    
+    // Mock OpenAI API for preview mode
+    if (!(window as any).openai) {
+      (window as any).openai = {
+        theme: isDark ? 'dark' : 'light',
+        displayMode: 'inline',
+        maxHeight: 600,
+        toolInput: {},
+        toolOutput: mockSpotifySearch,
+        toolResponseMetadata: null,
+        widgetState: null,
+        setWidgetState: async (state: any) => {
+          console.log('[Mock] setWidgetState called:', state);
+          (window as any).openai.widgetState = state;
+          // Trigger a custom event to notify the widget
+          window.dispatchEvent(new CustomEvent('openai:set_globals', {
+            detail: { globals: { widgetState: state } }
+          }));
+        },
+        callTool: async (name: string, args: any) => {
+          console.log('[Mock] callTool called:', name, args);
+          // Simulate API delay
+          await new Promise(resolve => setTimeout(resolve, 500));
+          // Simulate success
+          return { result: `Successfully called ${name}` };
+        },
+        sendFollowUpMessage: async (args: any) => {
+          console.log('[Mock] sendFollowUpMessage called:', args);
+        },
+        openExternal: (payload: any) => {
+          console.log('[Mock] openExternal called:', payload);
+          window.open(payload.href, '_blank');
+        },
+        requestDisplayMode: async (args: any) => {
+          console.log('[Mock] requestDisplayMode called:', args);
+          return { mode: args.mode };
+        },
+      };
+    }
+    
+    return () => {
+      delete (window as any).__WIDGET_PROPS__;
+    };
   }, [isDark]);
 
   const toggleTheme = () => {
@@ -119,7 +211,7 @@ function App() {
       </div>
 
       <div className="w-[760px]">
-        <SpotifySearch {...mockSpotifySearch} />
+        <SpotifySearch />
       </div>
     </div>
   );

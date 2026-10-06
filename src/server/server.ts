@@ -58,22 +58,12 @@ function readWidgetHtml(componentName: string): string {
     );
   }
 
-  // Vite builds HTML files to assets/src/components/componentName.html
-  // Check this path FIRST since it's the actual build output location
-  const viteBuildPath = path.join(ASSETS_DIR, "src", "components", `${componentName}.html`);
-  if (fs.existsSync(viteBuildPath)) {
-    const htmlContents = fs.readFileSync(viteBuildPath, "utf8");
-    console.log(`[readWidgetHtml] Found HTML at Vite build path: ${viteBuildPath}`);
-    return htmlContents;
-  }
-
-  // Fallback: Try direct path
+  // Try direct path first
   const directPath = path.join(ASSETS_DIR, `${componentName}.html`);
   let htmlContents: string | null = null;
 
   if (fs.existsSync(directPath)) {
     htmlContents = fs.readFileSync(directPath, "utf8");
-    console.log(`[readWidgetHtml] Found HTML at direct path: ${directPath}`);
   } else {
     // Check for versioned files like "component-hash.html"
     const candidates = fs
@@ -85,7 +75,12 @@ function readWidgetHtml(componentName: string): string {
     const fallback = candidates[candidates.length - 1];
     if (fallback) {
       htmlContents = fs.readFileSync(path.join(ASSETS_DIR, fallback), "utf8");
-      console.log(`[readWidgetHtml] Found HTML at versioned path: ${fallback}`);
+    } else {
+      // Check in src/components subdirectory as fallback
+      const nestedPath = path.join(ASSETS_DIR, "src", "components", `${componentName}.html`);
+      if (fs.existsSync(nestedPath)) {
+        htmlContents = fs.readFileSync(nestedPath, "utf8");
+      }
     }
   }
 
@@ -479,33 +474,12 @@ function createSpotifyServer(sessionId: string): Server {
         throw new Error(`Unknown resource: ${request.params.uri}`);
       }
 
-      // Re-read HTML file on each request to avoid caching stale content
-      // This ensures we always serve the latest widget HTML after rebuilds
-      let html = widget.html;
-      try {
-        const freshHtml = readWidgetHtml(widget.id);
-        if (freshHtml) {
-          html = freshHtml;
-          // Update cached version for next time
-          widget.html = freshHtml;
-        }
-      } catch (error) {
-        // If reading fails, use cached version
-        console.warn(`Failed to re-read widget HTML for ${widget.id}, using cached version:`, error);
-      }
-
-      // Log which bundle is referenced in the HTML for debugging
-      const bundleMatch = html.match(/spotify-search-([A-Za-z0-9_-]+)\.js/);
-      if (bundleMatch) {
-        console.log(`[ReadResource] Serving widget ${widget.id} with bundle: ${bundleMatch[1]}`);
-      }
-
       return {
         contents: [
           {
             uri: widget.templateUri,
             mimeType: "text/html+skybridge",
-            text: html,
+            text: widget.html,
             _meta: widgetMeta(widget),
           },
         ],
@@ -981,7 +955,7 @@ const port = Number.isFinite(portEnv) ? portEnv : 8000;
 
 // Helper function to set CORS headers
 function setCorsHeaders(res: ServerResponse, origin?: string) {
-  const allowedOrigins = ['https://zerotwo.ai', 'http://localhost:3000', 'http://localhost:5173'];
+  const allowedOrigins = ['https://zerotwo.ai', 'https://app.zerotwo.ai', 'http://localhost:3000', 'http://localhost:5173'];
   const requestOrigin = origin || '*';
   const allowOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : '*';
   res.setHeader("Access-Control-Allow-Origin", allowOrigin);
@@ -1009,7 +983,10 @@ const httpServer = createServer(
     }
 
     if (req.method === "GET" && url.pathname === ssePath) {
-      await handleSseRequest(res);
+      // Extract Authorization header if present (fallback auth endpoint)
+      const authHeader = req.headers.authorization || req.headers.Authorization;
+      const authHeaderStr = authHeader ? (typeof authHeader === "string" ? authHeader : authHeader[0]) : undefined;
+      await handleSseRequest(res, undefined, authHeaderStr);
       return;
     }
 
@@ -1050,42 +1027,12 @@ const httpServer = createServer(
         };
         const contentType = contentTypes[ext] || "application/octet-stream";
         
-        // Get file stats for ETag generation
-        const stats = fs.statSync(resolvedPath);
-        const fileContent = fs.readFileSync(resolvedPath, "utf8");
-        // Generate ETag from file modification time and size for cache invalidation
-        const etag = crypto.createHash("md5").update(`${stats.mtimeMs}-${stats.size}`).digest("hex");
-        
-        // Check if client has cached version
-        const ifNoneMatch = req.headers["if-none-match"];
-        if (ifNoneMatch === etag) {
-          res.writeHead(304, {
-            "ETag": etag,
-            "Cache-Control": "no-cache, must-revalidate",
-          });
-          res.end();
-          return;
-        }
-        
-        // Log which bundle is referenced for HTML files (for debugging)
-        if (ext === ".html" && fileContent.includes("spotify-search-")) {
-          const bundleMatch = fileContent.match(/spotify-search-([A-Za-z0-9_-]+)\.js/);
-          if (bundleMatch) {
-            console.log(`[HTTP] Serving ${assetPath} with bundle: ${bundleMatch[1]}`);
-          }
-        }
-        
         res.writeHead(200, {
           "Content-Type": contentType,
           "Access-Control-Allow-Origin": "*",
-          // Disable caching for widget assets to ensure fresh content after rebuilds
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Pragma": "no-cache",
-          "Expires": "0",
-          "ETag": etag,
-          "Last-Modified": stats.mtime.toUTCString(),
+          "Cache-Control": "public, max-age=3600",
         });
-        res.end(fileContent);
+        fs.createReadStream(resolvedPath).pipe(res);
         return;
       }
     }

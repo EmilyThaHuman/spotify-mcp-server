@@ -42,10 +42,9 @@ export function useWidgetState<T extends UnknownObject>(
             else if ((window.openai as any)?.skybridge?.setState) {
               (window.openai as any).skybridge.setState(newState);
             }
-            // If neither exists, just update local state (no persistence)
           } catch (error) {
             // Silently fail if setWidgetState is not available
-            console.warn('[useWidgetState] setWidgetState not available:', error);
+            console.warn('[Spotify Widget] State persistence failed:', error);
           }
         }
 

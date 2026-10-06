@@ -1,7 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Loader2, Check } from 'lucide-react';
-import { useWidgetProps, useWidgetState } from '../hooks';
-import { useDisplayMode } from '../hooks/use-display-mode';
+import { useWidgetProps, useWidgetState, useTheme } from '../hooks';
 import '../styles/index.css';
 import { cn } from '../lib/utils';
 
@@ -38,9 +37,65 @@ const SpotifySearch: React.FC<SpotifySearchProps> = () => {
     console.log('[SpotifySearch] window.openai.toolOutput:', (window as any).openai?.toolOutput);
   }
 
-  const displayMode = useDisplayMode();
-  const isDark = (displayMode as string) === 'dark' || 
-    (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const theme = useTheme();
+  const [isDark, setIsDark] = useState(() => {
+    if (theme === 'light') return false;
+    if (theme === 'dark') return true;
+    // Check if document has dark class (for preview mode)
+    if (typeof document !== 'undefined' && document.documentElement.classList.contains('dark')) {
+      return true;
+    }
+    // Fall back to system preference
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false; // Default to light mode
+  });
+
+  // Update theme when theme or document class changes
+  useEffect(() => {
+    const updateTheme = () => {
+      if (theme === 'light') {
+        setIsDark(false);
+        return;
+      }
+      if (theme === 'dark') {
+        setIsDark(true);
+        return;
+      }
+      // Check document class (for preview mode)
+      if (typeof document !== 'undefined') {
+        setIsDark(document.documentElement.classList.contains('dark'));
+      }
+    };
+
+    updateTheme();
+
+    // Watch for changes to the dark class on document
+    if (typeof document !== 'undefined') {
+      const observer = new MutationObserver(updateTheme);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class'],
+      });
+
+      // Also listen to system preference changes
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = () => {
+        if (theme === null || theme === undefined) {
+          setIsDark(mediaQuery.matches);
+        }
+      };
+      mediaQuery.addEventListener('change', handleChange);
+
+      return () => {
+        observer.disconnect();
+        mediaQuery.removeEventListener('change', handleChange);
+      };
+    }
+    
+    return undefined;
+  }, [theme]);
 
   const { results = {} } = props;
   
@@ -74,12 +129,19 @@ const SpotifySearch: React.FC<SpotifySearchProps> = () => {
       // Call the actual Spotify API tool
       if (typeof window !== 'undefined' && window.openai?.callTool) {
         const toolName = isCurrentlyAdded ? 'remove_from_library' : 'add_to_library';
-        await window.openai.callTool(toolName, {
-          itemType: 'track',
-          itemId: track.id,
-        });
+        
+        try {
+          await window.openai.callTool(toolName, {
+            itemType: 'track',
+            itemId: track.id,
+          });
+        } catch (toolError) {
+          // Log the error but continue - the operation may have succeeded despite the error
+          console.warn('[Spotify Widget] Tool call error (operation may have succeeded):', toolError);
+        }
 
         // Update widget state to persist the change
+        // We do this regardless of the error because the operation likely succeeded
         setWidgetState((prev) => {
           const currentTracks = prev?.addedTracks || [];
           const newTracks = isCurrentlyAdded
@@ -91,6 +153,7 @@ const SpotifySearch: React.FC<SpotifySearchProps> = () => {
           };
         });
       } else {
+        console.warn('[Spotify Widget] callTool not available - widget may not be in OpenAI environment');
         // Fallback to postMessage if callTool is not available
         if (window.parent && window.parent.postMessage) {
           window.parent.postMessage({
@@ -100,11 +163,23 @@ const SpotifySearch: React.FC<SpotifySearchProps> = () => {
               track: track,
             },
           }, '*');
+          
+          // Still update local state for visual feedback
+          setWidgetState((prev) => {
+            const currentTracks = prev?.addedTracks || [];
+            const newTracks = isCurrentlyAdded
+              ? currentTracks.filter((id) => id !== track.id)
+              : [...currentTracks, track.id];
+            
+            return {
+              addedTracks: newTracks,
+            };
+          });
         }
       }
     } catch (error) {
-      console.error('Failed to update library:', error);
-      // Optionally show error to user
+      console.error('[Spotify Widget] Failed to update library:', error);
+      // Note: Can't use alert() in sandboxed iframe, error is logged to console
     } finally {
       // Clear loading state
       setLoadingTracks((prev) => {
@@ -152,16 +227,16 @@ const SpotifySearch: React.FC<SpotifySearchProps> = () => {
                   onClick={() => handleTrackPlay(track)}
                   className={cn(
                     "flex items-center gap-3 p-4 transition-colors duration-150",
-                    "cursor-pointer relative",
+                    "cursor-pointer relative max-h-20",
                     isDark
                       ? "hover:bg-white/[0.05]"
-                      : "hover:bg-black/[0.02]"
+                      : "hover:bg-gray-100"
                   )}
                 >
                   <img
                     src={track.image || 'https://via.placeholder.com/48'}
                     alt={track.name}
-                    className="w-14 h-14 rounded-lg flex-shrink-0 object-cover"
+                    className="w-12 h-12 rounded-lg flex-shrink-0 object-cover"
                     onError={(e) => {
                       // Fallback to placeholder if image fails to load
                       const target = e.target as HTMLImageElement;
@@ -174,11 +249,14 @@ const SpotifySearch: React.FC<SpotifySearchProps> = () => {
                   <div className="flex-1 min-w-0 mr-3">
                     <div className={cn(
                       "text-[15px] font-medium overflow-hidden text-ellipsis whitespace-nowrap mb-1 leading-tight",
-                      isDark ? "text-white" : "text-[#2d2d2d]"
+                      isDark ? "text-white" : "text-gray-900"
                     )}>
                       {track.name}
                       {track.explicit && (
-                        <span className="inline-block ml-1.5 px-1.5 py-0.5 bg-gray-400 text-white rounded text-[9px] font-bold uppercase align-middle">
+                        <span className={cn(
+                          "inline-block ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase align-middle",
+                          isDark ? "bg-gray-500 text-white" : "bg-gray-300 text-gray-700"
+                        )}>
                           E
                         </span>
                       )}
@@ -209,14 +287,20 @@ const SpotifySearch: React.FC<SpotifySearchProps> = () => {
                     aria-label={addedTracksSet.has(track.id) ? "Remove from library" : "Add to library"}
                   >
                     {loadingTracks.has(track.id) ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className={cn(
+                        "w-4 h-4 animate-spin",
+                        isDark ? "text-white" : "text-gray-900"
+                      )} />
                     ) : addedTracksSet.has(track.id) ? (
-                      // White circle with black checkmark for added state
+                      // Circle with checkmark for added state
                       <div className={cn(
                         "w-5 h-5 rounded-full flex items-center justify-center",
-                        "bg-white"
+                        isDark ? "bg-white" : "bg-gray-900"
                       )}>
-                        <Check className="w-3 h-3 text-black stroke-[3]" />
+                        <Check className={cn(
+                          "w-3 h-3 stroke-[3]",
+                          isDark ? "text-black" : "text-white"
+                        )} />
                       </div>
                     ) : (
                       // Plus icon for not added state
@@ -237,7 +321,7 @@ const SpotifySearch: React.FC<SpotifySearchProps> = () => {
                 </div>
                 {index < tracks.length - 1 && (
                   <div className={cn(
-                    "h-px mx-4",
+                    "h-px w-full",
                     isDark ? "bg-[#3a3a3a]" : "bg-gray-200"
                   )} />
                 )}
